@@ -172,6 +172,27 @@ button {
 
   background: #2563eb;
   color: white;
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #0f172a;
+  border-radius: 20px;
+  overflow: hidden;
+}
 
+.table th {
+  text-align: left;
+  padding: 18px;
+  background: #1e293b;
+}
+
+.table td {
+  padding: 18px;
+  border-top: 1px solid #1e293b;
+}
+
+.blue {
+  color: #60a5fa;
+}
   cursor: pointer;
 }
