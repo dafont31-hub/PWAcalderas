@@ -2,7 +2,7 @@ const SUPABASE_URL =
 'https://lofftitowvcnenciygbh.supabase.co'
 
 const SUPABASE_ANON_KEY =
-'TU_ANON_KEY'
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvZmZ0aXRvd3ZjbmVuY2l5Z2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTc2ODEsImV4cCI6MjA5NDYzMzY4MX0.9p6ykx-IavftenRuQjBeOlQiVpQVZ-HNvPQj7vusXYw'
 
 const supabaseClient =
 supabase.createClient(
@@ -20,25 +20,33 @@ function renderLayout(content) {
   root.innerHTML = `
     <div class="layout">
 
-      <aside class="sidebar">
+      <nav class="navbar">
 
-        <h1 class="logo">
-          Calderas
-        </h1>
+        <div class="nav-left">
 
-        <button onclick="goPage('dashboard')">
-          Dashboard
-        </button>
+          <div class="logo">
+            Calderas
+          </div>
 
-        <button onclick="goPage('ots')">
-          OTs
-        </button>
+        </div>
 
-        <button onclick="goPage('checklists')">
-          Checklists
-        </button>
+        <div class="nav-right">
 
-      </aside>
+          <button onclick="goPage('dashboard')">
+            Dashboard
+          </button>
+
+          <button onclick="goPage('ots')">
+            OTs
+          </button>
+
+          <button onclick="goPage('checklists')">
+            Checklists
+          </button>
+
+        </div>
+
+      </nav>
 
       <main class="main-content">
         ${content}
@@ -65,7 +73,17 @@ function goPage(page) {
   }
 }
 
-function renderDashboard() {
+async function renderDashboard() {
+
+  const { data: ots } =
+    await supabaseClient
+      .from('ots')
+      .select('*')
+
+  const { data: checklists } =
+    await supabaseClient
+      .from('checklists')
+      .select('*')
 
   renderLayout(`
 
@@ -76,21 +94,28 @@ function renderDashboard() {
     <div class="grid">
 
       <div class="card">
-        <h2>OT Pendientes</h2>
-        <div class="value yellow">12</div>
+        <h2>OT Totales</h2>
+        <div class="value yellow">
+          ${ots ? ots.length : 0}
+        </div>
       </div>
 
       <div class="card">
-        <h2>Equipos críticos</h2>
-        <div class="value red">3</div>
+        <h2>Checklists</h2>
+        <div class="value green">
+          ${checklists ? checklists.length : 0}
+        </div>
       </div>
 
       <div class="card">
-        <h2>Preventivos hoy</h2>
-        <div class="value green">5</div>
+        <h2>Estado Sistema</h2>
+        <div class="value blue">
+          OK
+        </div>
       </div>
 
     </div>
+
   `)
 }
 
@@ -100,39 +125,75 @@ async function renderOTs() {
     await supabaseClient
       .from('ots')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('created_at', {
+        ascending: false
+      })
 
   let html = `
+
     <div class="topbar">
-      <h1 class="title">Órdenes de Trabajo</h1>
+
+      <h1 class="title">
+        Órdenes de Trabajo
+      </h1>
 
       <button onclick="createOT()">
         Nueva OT
       </button>
+
     </div>
+
+    <table class="table">
+
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Estado</th>
+          <th>Prioridad</th>
+        </tr>
+      </thead>
+
+      <tbody>
   `
 
-  if (data) {
+  if (data && data.length > 0) {
 
     data.forEach(ot => {
 
       html += `
-        <div class="card ot-card">
+        <tr>
 
-          <h2>${ot.titulo || 'Sin título'}</h2>
+          <td>
+            ${ot.titulo || ''}
+          </td>
 
-          <p>
-            ${ot.descripcion || ''}
-          </p>
+          <td>
+            ${ot.estado || ''}
+          </td>
 
-          <div class="badge">
-            ${ot.estado}
-          </div>
+          <td>
+            ${ot.prioridad || 'media'}
+          </td>
 
-        </div>
+        </tr>
       `
     })
+
+  } else {
+
+    html += `
+      <tr>
+        <td colspan="3">
+          No hay órdenes de trabajo
+        </td>
+      </tr>
+    `
   }
+
+  html += `
+      </tbody>
+    </table>
+  `
 
   renderLayout(html)
 }
@@ -148,7 +209,8 @@ async function createOT() {
     .from('ots')
     .insert({
       titulo,
-      estado: 'pendiente'
+      estado: 'pendiente',
+      prioridad: 'media'
     })
 
   renderOTs()
@@ -160,9 +222,12 @@ async function renderChecklists() {
     await supabaseClient
       .from('checklists')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('created_at', {
+        ascending: false
+      })
 
   let html = `
+
     <div class="topbar">
 
       <h1 class="title">
@@ -174,27 +239,55 @@ async function renderChecklists() {
       </button>
 
     </div>
+
+    <table class="table">
+
+      <thead>
+        <tr>
+          <th>Observaciones</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+
+      <tbody>
   `
 
-  if (data) {
+  if (data && data.length > 0) {
 
     data.forEach(item => {
 
       html += `
-        <div class="card ot-card">
+        <tr>
 
-          <h2>
-            Checklist
-          </h2>
-
-          <p>
+          <td>
             ${item.observaciones || ''}
-          </p>
+          </td>
 
-        </div>
+          <td>
+            ${new Date(
+              item.created_at
+            ).toLocaleString()}
+          </td>
+
+        </tr>
       `
     })
+
+  } else {
+
+    html += `
+      <tr>
+        <td colspan="2">
+          No hay checklists
+        </td>
+      </tr>
+    `
   }
+
+  html += `
+      </tbody>
+    </table>
+  `
 
   renderLayout(html)
 }
@@ -203,6 +296,8 @@ async function createChecklist() {
 
   const observaciones =
     prompt('Observaciones checklist')
+
+  if (!observaciones) return
 
   await supabaseClient
     .from('checklists')
@@ -216,6 +311,7 @@ async function createChecklist() {
 function renderLogin() {
 
   root.innerHTML = `
+
     <div class="container">
 
       <div class="card login-card">
