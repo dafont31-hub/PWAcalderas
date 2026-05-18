@@ -2,7 +2,7 @@ const SUPABASE_URL =
 'https://lofftitowvcnenciygbh.supabase.co'
 
 const SUPABASE_ANON_KEY =
-'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvZmZ0aXRvd3ZjbmVuY2l5Z2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTc2ODEsImV4cCI6MjA5NDYzMzY4MX0.9p6ykx-IavftenRuQjBeOlQiVpQVZ-HNvPQj7vusXYw'
+'TU_ANON_KEY'
 
 const supabaseClient =
 supabase.createClient(
@@ -10,7 +10,208 @@ supabase.createClient(
   SUPABASE_ANON_KEY
 )
 
-const root = document.getElementById('root')
+const root =
+document.getElementById('root')
+
+let currentPage = 'dashboard'
+
+function renderLayout(content) {
+
+  root.innerHTML = `
+    <div class="layout">
+
+      <aside class="sidebar">
+
+        <h1 class="logo">
+          Calderas
+        </h1>
+
+        <button onclick="goPage('dashboard')">
+          Dashboard
+        </button>
+
+        <button onclick="goPage('ots')">
+          OTs
+        </button>
+
+        <button onclick="goPage('checklists')">
+          Checklists
+        </button>
+
+      </aside>
+
+      <main class="main-content">
+        ${content}
+      </main>
+
+    </div>
+  `
+}
+
+function goPage(page) {
+
+  currentPage = page
+
+  if (page === 'dashboard') {
+    renderDashboard()
+  }
+
+  if (page === 'ots') {
+    renderOTs()
+  }
+
+  if (page === 'checklists') {
+    renderChecklists()
+  }
+}
+
+function renderDashboard() {
+
+  renderLayout(`
+
+    <h1 class="title">
+      Dashboard Sala Calderas
+    </h1>
+
+    <div class="grid">
+
+      <div class="card">
+        <h2>OT Pendientes</h2>
+        <div class="value yellow">12</div>
+      </div>
+
+      <div class="card">
+        <h2>Equipos críticos</h2>
+        <div class="value red">3</div>
+      </div>
+
+      <div class="card">
+        <h2>Preventivos hoy</h2>
+        <div class="value green">5</div>
+      </div>
+
+    </div>
+  `)
+}
+
+async function renderOTs() {
+
+  const { data } =
+    await supabaseClient
+      .from('ots')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+  let html = `
+    <div class="topbar">
+      <h1 class="title">Órdenes de Trabajo</h1>
+
+      <button onclick="createOT()">
+        Nueva OT
+      </button>
+    </div>
+  `
+
+  if (data) {
+
+    data.forEach(ot => {
+
+      html += `
+        <div class="card ot-card">
+
+          <h2>${ot.titulo || 'Sin título'}</h2>
+
+          <p>
+            ${ot.descripcion || ''}
+          </p>
+
+          <div class="badge">
+            ${ot.estado}
+          </div>
+
+        </div>
+      `
+    })
+  }
+
+  renderLayout(html)
+}
+
+async function createOT() {
+
+  const titulo =
+    prompt('Título OT')
+
+  if (!titulo) return
+
+  await supabaseClient
+    .from('ots')
+    .insert({
+      titulo,
+      estado: 'pendiente'
+    })
+
+  renderOTs()
+}
+
+async function renderChecklists() {
+
+  const { data } =
+    await supabaseClient
+      .from('checklists')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+  let html = `
+    <div class="topbar">
+
+      <h1 class="title">
+        Checklists
+      </h1>
+
+      <button onclick="createChecklist()">
+        Nuevo Checklist
+      </button>
+
+    </div>
+  `
+
+  if (data) {
+
+    data.forEach(item => {
+
+      html += `
+        <div class="card ot-card">
+
+          <h2>
+            Checklist
+          </h2>
+
+          <p>
+            ${item.observaciones || ''}
+          </p>
+
+        </div>
+      `
+    })
+  }
+
+  renderLayout(html)
+}
+
+async function createChecklist() {
+
+  const observaciones =
+    prompt('Observaciones checklist')
+
+  await supabaseClient
+    .from('checklists')
+    .insert({
+      observaciones
+    })
+
+  renderChecklists()
+}
 
 function renderLogin() {
 
@@ -65,44 +266,6 @@ async function login() {
   }
 
   renderDashboard()
-}
-
-function renderDashboard() {
-
-  root.innerHTML = `
-    <div class="container">
-
-      <h1 class="title">
-        Dashboard Sala Calderas
-      </h1>
-
-      <div class="grid">
-
-        <div class="card">
-          <h2>OT Pendientes</h2>
-          <div class="value" style="color:#facc15">
-            12
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>Equipos críticos</h2>
-          <div class="value" style="color:#f87171">
-            3
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>Preventivos hoy</h2>
-          <div class="value" style="color:#4ade80">
-            5
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  `
 }
 
 async function init() {
