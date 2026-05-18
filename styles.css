@@ -53,6 +53,64 @@ button {
   padding: 14px;
   border: none;
   border-radius: 10px;
+  .layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  background: #020617;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar button {
+  background: #1e293b;
+}
+
+.logo {
+  font-size: 28px;
+  margin-bottom: 30px;
+}
+
+.main-content {
+  flex: 1;
+  padding: 24px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.ot-card {
+  margin-bottom: 16px;
+}
+
+.badge {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: #334155;
+  border-radius: 8px;
+}
+
+.yellow {
+  color: #facc15;
+}
+
+.red {
+  color: #f87171;
+}
+
+.green {
+  color: #4ade80;
+}
   background: #2563eb;
   color: white;
   font-weight: bold;
